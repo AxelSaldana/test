@@ -893,22 +893,22 @@ class Model3DManager {
                         // Guardar la pose completa de la retícula
                         this.model.matrix.copy(this.reticle.matrix);
                         this.model.matrix.decompose(this.model.position, this.model.quaternion, this.model.scale);
-                        
-                        // ASEGURAR que esté al ras del piso
-                        this.model.position.y = 0;
-                        
+
+                        // ASEGURAR que esté al nivel del piso ajustado
+                        this.model.position.y = -1; // Mismo nivel que retícula
+
                         // Deshabilitar updates automáticos para mantener fijo
                         this.model.matrixAutoUpdate = false;
                         this.model.updateMatrix();
                         this.hasPlaced = true;
                         if (this.reticle) this.reticle.visible = false;
-                        
+
                         // Ocultar indicador de posición y mostrar mensaje de confirmación
                         if (this.ui && this.ui.arStatus) {
                             this.ui.arStatus.innerHTML = '✅ Modelo fijado en el piso';
                             setTimeout(() => this.ui.arStatus && this.ui.arStatus.classList.add('hidden'), 2000);
                         }
-                        
+
                         console.log('📌 Modelo fijado AL RAS DEL PISO en:', this.model.position);
                         return;
                     }
@@ -920,9 +920,9 @@ class Model3DManager {
                         const pos = this._lastCameraPosition.clone();
                         const dir = this._lastCameraDirection.clone();
 
-                        // Colocar 1.2m al frente y a la altura de los ojos menos 0.3m
+                        // Colocar 1.2m al frente al nivel del piso
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.2));
-                        fallbackPos.y -= 0.3; // Bajar un poco para que esté a buena altura
+                        fallbackPos.y = -0.5; // Mismo nivel que retícula
 
                         this.model.position.copy(fallbackPos);
                         // Hacer que el modelo mire hacia la cámara
@@ -1024,23 +1024,23 @@ class Model3DManager {
                 const pose = hit.getPose(this.xrRefSpace);
                 if (pose && this.reticle) {
                     this.reticle.visible = !this.hasPlaced; // hide reticle after placement
-                    
+
                     // Ajustar altura: Extraer posición y forzar Y = 0 (al ras del piso)
                     this.reticle.matrix.fromArray(pose.transform.matrix);
                     const position = new THREE.Vector3();
                     const quaternion = new THREE.Quaternion();
                     const scale = new THREE.Vector3();
                     this.reticle.matrix.decompose(position, quaternion, scale);
-                    
-                    // IMPORTANTE: Forzar Y = 0 para que esté AL RAS DEL PISO
-                    position.y = 0;
-                    
+
+                    // IMPORTANTE: Bajar retícula al piso (ajustable según tu modelo)
+                    position.y = -0.5; // Bajar 50cm más
+
                     // Reconstruir matriz con la nueva posición
                     this.reticle.matrix.compose(position, quaternion, scale);
-                    
+
                     // Actualizar UI con posición de la retícula
                     this._updateReticlePositionUI(position);
-                    
+
                     this._xrHits++;
                     // Aviso UI: se detecta plano
                     try { this.canvas?.dispatchEvent(new CustomEvent('xr-plane-detected')); } catch (_) { }
@@ -1055,14 +1055,14 @@ class Model3DManager {
                         const pos = new THREE.Vector3().setFromMatrixPosition(m);
                         const dir = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.5));
-                        
-                        // IMPORTANTE: Al ras del piso también en fallback
-                        fallbackPos.y = 0;
-                        
+
+                        // IMPORTANTE: Bajar al piso en fallback
+                        fallbackPos.y = -0.5; // Bajar 50cm más
+
                         this.reticle.visible = true;
                         this.reticle.matrix.identity();
                         this.reticle.matrix.setPosition(fallbackPos);
-                        
+
                         // Actualizar UI con posición fallback
                         this._updateReticlePositionUI(fallbackPos);
                     }

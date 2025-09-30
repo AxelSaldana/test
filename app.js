@@ -130,12 +130,12 @@ function createReticle() {
 // Cargar modelo GLTF
 function loadGLTFModel() {
     const loader = new GLTFLoader();
-    
+
     // Configurar DRACO para modelos comprimidos
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
     loader.setDRACOLoader(dracoLoader);
-    
+
     console.log('Iniciando carga del modelo avatar_prueba.glb...');
 
     loader.load(
@@ -253,8 +253,8 @@ function onSelect() {
             const fallbackPos = lastCameraPosition.clone().add(
                 lastCameraDirection.clone().multiplyScalar(1.2)
             );
-            // IMPORTANTE: Poner AL RAS DEL PISO (Y = 0)
-            fallbackPos.y = 0;
+            // IMPORTANTE: Bajar más al piso
+            fallbackPos.y = -1; // Bajar 50cm más
 
             model.position.copy(fallbackPos);
             model.lookAt(lastCameraPosition);
@@ -314,8 +314,8 @@ function render(timestamp, frame) {
                         const fallbackPos = lastCameraPosition.clone().add(
                             lastCameraDirection.clone().multiplyScalar(1.5)
                         );
-                        // IMPORTANTE: Poner al ras del piso (Y = 0)
-                        fallbackPos.y = 0;
+                        // IMPORTANTE: Bajar más al piso
+                        fallbackPos.y = -0.5; // Bajar 50cm más
 
                         reticle.position.copy(fallbackPos);
                         reticle.rotation.x = -Math.PI / 2;
