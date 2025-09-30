@@ -599,17 +599,53 @@ class Model3DManager {
     }
 
     createTemporaryModel() {
-        console.log('🔧 Creando modelo temporal visible...');
+        console.log('🔧 Creando avatar simple como fallback...');
 
-        // Crear cubo brillante que se vea
-        const geometry = new THREE.BoxGeometry(2, 2, 2);
-        const material = new THREE.MeshPhongMaterial({
-            color: 0xff4444,
-            shininess: 100
-        });
+        // Crear un avatar simple con geometrías básicas
+        const avatarGroup = new THREE.Group();
 
-        this.model = new THREE.Mesh(geometry, material);
-        this.model.position.set(0, 1, 0);
+        // Cuerpo
+        const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 32);
+        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4a90e2 });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.4;
+        avatarGroup.add(body);
+
+        // Cabeza
+        const headGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+        const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.y = 1.05;
+        avatarGroup.add(head);
+
+        // Brazos
+        const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 16);
+        const armMaterial = new THREE.MeshStandardMaterial({ color: 0x4a90e2 });
+        
+        const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+        leftArm.position.set(-0.4, 0.4, 0);
+        leftArm.rotation.z = Math.PI / 6;
+        avatarGroup.add(leftArm);
+
+        const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+        rightArm.position.set(0.4, 0.4, 0);
+        rightArm.rotation.z = -Math.PI / 6;
+        avatarGroup.add(rightArm);
+
+        // Piernas
+        const legGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.6, 16);
+        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+        
+        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        leftLeg.position.set(-0.15, -0.3, 0);
+        avatarGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        rightLeg.position.set(0.15, -0.3, 0);
+        avatarGroup.add(rightLeg);
+
+        this.model = avatarGroup;
+        this.model.position.set(0, 0, 0);
         this.model.castShadow = true;
         this.modelLoaded = true;
 
@@ -862,20 +898,28 @@ class Model3DManager {
                         return;
                     }
 
-                    // Fallback: viewer pose forward
+                    // Fallback MEJORADO: colocar al frente incluso sin hit-test
+                    console.log('💡 Sin superficie detectada - Colocando modelo al frente');
                     if (frame && this.xrRefSpace) {
                         const viewerPose = frame.getViewerPose(this.xrRefSpace);
                         if (viewerPose && viewerPose.views && viewerPose.views[0]) {
                             const m = new THREE.Matrix4().fromArray(viewerPose.views[0].transform.matrix);
                             const pos = new THREE.Vector3().setFromMatrixPosition(m);
                             const dir = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
-                            const fallbackPos = pos.clone().add(dir.multiplyScalar(1.5));
+                            
+                            // Colocar 1.2m al frente y a la altura de los ojos menos 0.3m
+                            const fallbackPos = pos.clone().add(dir.multiplyScalar(1.2));
+                            fallbackPos.y -= 0.3; // Bajar un poco para que esté a buena altura
+                            
                             this.model.position.copy(fallbackPos);
+                            this.model.quaternion.setFromRotationMatrix(new THREE.Matrix4().extractRotation(m));
+                            
                             // Deshabilitar updates automáticos para mantener fijo
                             this.model.matrixAutoUpdate = false;
                             this.model.updateMatrix();
                             this.hasPlaced = true;
-                            console.log('📌 Modelo fijado en AR (fallback sin plano) en:', fallbackPos);
+                            console.log('📌 Modelo colocado al frente en:', fallbackPos);
+                            console.log('👍 ¡Listo! El avatar está fijo en el espacio');
                             try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-fallback')); } catch (_) {}
                         }
                     }
@@ -1029,20 +1073,20 @@ class Model3DManager {
     }
 
     createReticle() {
-        // Retículo azul brillante y más grande para mejor visibilidad
-        const geo = new THREE.RingGeometry(0.15, 0.20, 32).rotateX(-Math.PI / 2);
+        // Retículo azul brillante MUY GRANDE para mejor visibilidad
+        const geo = new THREE.RingGeometry(0.2, 0.3, 32).rotateX(-Math.PI / 2);
         const mat = new THREE.MeshBasicMaterial({ 
             color: 0x00BFFF,  // Azul brillante (Deep Sky Blue)
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.9
+            opacity: 1.0  // Totalmente opaco
         });
         this.reticle = new THREE.Mesh(geo, mat);
         this.reticle.matrixAutoUpdate = false;
         this.reticle.visible = false;
         this.scene.add(this.reticle);
         
-        console.log('🎯 Retículo azul creado');
+        console.log('🎯 Retículo azul GRANDE creado (0.2-0.3m)');
     }
 
     enableTapPlacement(enable = true) {
@@ -1738,7 +1782,7 @@ class VirtualAssistantApp {
             if (this.model3dManager.reticle) this.model3dManager.reticle.visible = true;
             // Hint en UI
             if (this.ui && this.ui.arResponse) {
-                this.ui.arResponse.innerHTML = '<div style="color:#00BFFF">🎯 Recoloca: mueve el teléfono lentamente para encontrar una superficie. Busca el <strong>círculo azul</strong> y toca para colocar.</div>';
+                this.ui.arResponse.innerHTML = '<div style="color:#00BFFF; font-size: 16px;">🎯 <strong>Recolocando...</strong><br><br>✨ Busca el círculo azul grande y toca<br>💡 O simplemente <strong>toca en cualquier lugar</strong> para colocar al frente</div>';
             }
         });
         if (this.ui.arMicBtn) this.ui.arMicBtn.addEventListener('click', () => this.startVoiceInteraction(true));
@@ -1999,8 +2043,9 @@ class VirtualAssistantApp {
                     🤖 ¡Avatar con Gemini 2.0 en AR!
                 </div>
                 <div style="margin-bottom: 10px;">${welcomeMsg}</div>
-                <div style="color: #00BFFF; font-size: 14px;">
-                    🎯 <strong>Busca el círculo azul</strong> y toca para colocar el avatar
+                <div style="color: #00BFFF; font-size: 15px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px;">
+                    ✨ <strong>Busca el círculo azul grande</strong><br>
+                    💡 O <strong>toca en cualquier lugar</strong> para colocar al frente
                 </div>
             `;
 
@@ -2019,9 +2064,10 @@ class VirtualAssistantApp {
                     <div style="color: #00BFFF; font-size: 18px; margin-bottom: 10px;">
                         🎯 Modo AR Activo
                     </div>
-                    <div style="color: #00BFFF;">
-                        Mueve el teléfono lentamente para detectar superficies.<br>
-                        <strong>Busca el círculo azul</strong> y toca para colocar el avatar.
+                    <div style="color: #00BFFF; font-size: 15px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px;">
+                        ✨ Mueve el teléfono para detectar superficies<br>
+                        🎯 <strong>Busca el círculo azul grande</strong><br>
+                        💡 O simplemente <strong>toca la pantalla</strong> para colocar al frente
                     </div>
                 `;
             }
