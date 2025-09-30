@@ -102,7 +102,16 @@ export class Model3DManager {
      */
     async loadModel() {
         return new Promise((resolve, reject) => {
-            const loader = new THREE.GLTFLoader();
+            // NOTA: Este archivo necesita importar GLTFLoader y DRACOLoader correctamente
+            // Por ahora está comentado para evitar errores
+            console.warn('⚠️ model-manager.js no se usa en el proyecto actual');
+            console.warn('💡 Usa js/app.js que tiene la implementación correcta');
+            reject(new Error('Este manager no se usa - usar js/app.js'));
+            
+            /* const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            loader.setDRACOLoader(dracoLoader);
             
             loader.load(
                 `${CONFIG.MODEL.PATH}${CONFIG.MODEL.FILE_NAME}`,
@@ -138,7 +147,7 @@ export class Model3DManager {
                     console.error('❌ Error cargando modelo:', error);
                     reject(error);
                 }
-            );
+            ); */
         });
     }
 

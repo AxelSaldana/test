@@ -5,6 +5,7 @@
 // Importar Three.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // ===== CONFIGURACIÓN SIMPLE =====
 const CONFIG = {
@@ -533,13 +534,11 @@ class Model3DManager {
 
             const loader = new GLTFLoader(); // ← Correcto: GLTFLoader (no THREE.GLTFLoader)
 
-            // Configurar DRACO si está disponible (opcional)
-            if (typeof THREE.DRACOLoader !== 'undefined') {
-                const dracoLoader = new THREE.DRACOLoader();
-                dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-                loader.setDRACOLoader(dracoLoader);
-                console.log('🗜️ DRACO configurado');
-            }
+            // Configurar DRACO (requerido para tu modelo)
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            loader.setDRACOLoader(dracoLoader);
+            console.log('🗜️ DRACO configurado para modelo comprimido');
 
             loader.load(
                 CONFIG.MODEL.PATH,

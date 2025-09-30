@@ -1,6 +1,7 @@
 // Importar Three.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // Variables globales
 let scene, camera, renderer, gl;
@@ -129,6 +130,12 @@ function createReticle() {
 // Cargar modelo GLTF
 function loadGLTFModel() {
     const loader = new GLTFLoader();
+    
+    // Configurar DRACO para modelos comprimidos
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
+    
     console.log('Iniciando carga del modelo avatar_prueba.glb...');
 
     loader.load(
