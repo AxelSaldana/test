@@ -531,10 +531,10 @@ class Model3DManager {
         return new Promise((resolve, reject) => {
             console.log('📦 CARGANDO:', CONFIG.MODEL.PATH);
 
-            const loader = new THREE.GLTFLoader();
+            const loader = new GLTFLoader(); // ← Correcto: GLTFLoader (no THREE.GLTFLoader)
 
-            // Configurar DRACO si está disponible
-            if (THREE.DRACOLoader) {
+            // Configurar DRACO si está disponible (opcional)
+            if (typeof THREE.DRACOLoader !== 'undefined') {
                 const dracoLoader = new THREE.DRACOLoader();
                 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
                 loader.setDRACOLoader(dracoLoader);
