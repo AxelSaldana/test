@@ -1494,16 +1494,10 @@ class VirtualAssistantApp {
         try {
             this.updatePermissionStatus('🔄 Inicializando...');
 
-            // 1. Cámara
-            this.updatePermissionStatus('📷 Inicializando cámara...');
-            this.cameraManager = new CameraManager();
-            const cameraSuccess = await this.cameraManager.init();
+            // WebXR puro - NO necesita cámara HTML
+            console.log('📱 Modo WebXR puro - Saltando inicialización de cámara HTML');
 
-            if (!cameraSuccess) {
-                throw new Error('No se pudo acceder a la cámara');
-            }
-
-            // 2. Gemini 2.0
+            // 1. Gemini 2.0
             this.updatePermissionStatus('🤖 Conectando Gemini 2.0...');
             const aiSuccess = await this.gemini.init();
 
@@ -1511,7 +1505,7 @@ class VirtualAssistantApp {
                 throw new Error('No se pudo conectar con Gemini 2.0');
             }
 
-            // 3. Speech
+            // 2. Speech
             this.updatePermissionStatus('🎤 Configurando voz...');
             const speechOk = await this.speech.init();
             if (!speechOk) {
@@ -1520,14 +1514,14 @@ class VirtualAssistantApp {
                 throw new Error(reason);
             }
 
-            // 4. Modelo 3D (reutilizar si ya está cargado para preview)
+            // 3. Modelo 3D (reutilizar si ya está cargado para preview)
             this.updatePermissionStatus('🎭 Preparando modelo 3D...');
             if (!this.model3dManager) {
                 this.model3dManager = new Model3DManager(this.ui.model3dCanvas);
                 await this.model3dManager.init();
             }
 
-            // 5. Listo
+            // 4. Listo
             this.isInitialized = true;
             this.hidePermissionModal();
             this.hideLoadingScreen();
