@@ -3,20 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebXR AR - Avatar Fijo</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Meta tags para PWA y AR -->
+    <meta name="description" content="Asistente Virtual con IA y Realidad Aumentada">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
-    <div id="container">
-        <div id="info">
-            <h1>Realidad Aumentada WebXR</h1>
-            <p id="status">Verificando compatibilidad...</p>
+    <!-- Canvas para modelo 3D -->
+    <canvas id="model3dCanvas"></canvas>
+    
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>Cargando Asistente Virtual</h2>
+            <p>Preparando experiencia AR...</p>
         </div>
-        
-        <button id="ar-button" disabled>Iniciar AR</button>
-        
-        <div id="instructions" style="display: none;">
-            <p>👆 Toca la pantalla para colocar el avatar en el espacio</p>
+    </div>
+
+    <!-- Modal de Permisos (IGUAL QUE PROYECTO FUNCIONANDO) -->
+    <div id="permissionModal" class="permission-modal">
+        <div class="modal-content">
+            <h3>🤖 Asistente Virtual AR</h3>
+            <p>Para la experiencia completa necesitamos acceso a tu cámara</p>
+            <div class="permissions-list">
+                <div class="permission-item">📷 Cámara (Realidad Aumentada)</div>
+                <div class="permission-item">🎤 Micrófono (Comandos de voz)</div>
+                <div class="permission-item">🤖 IA Gemini (Chat inteligente)</div>
+            </div>
+            <button id="requestPermissions" class="permission-btn">Activar Asistente AR</button>
+        </div>
+    </div>
+
+    <!-- Controles Principales (modo preview) -->
+    <div class="ui-overlay main-controls" id="mainControls">
+        <button class="chat-btn" id="chatBtn">
+            <span class="btn-icon">💬</span>
+            <span class="btn-text">Chat</span>
+        </button>
+        <button class="ar-btn" id="arBtn">
+            <span class="btn-icon">📱</span>
+            <span class="btn-text">AR</span>
+        </button>
+        <button class="voice-btn" id="voiceBtn">🎤</button>
+        <button class="model-btn" id="modelBtn">
+            <span class="btn-icon">🎭</span>
+            <span class="btn-text">Modelo</span>
+        </button>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="ui-overlay chat-modal" id="chatModal">
+        <div class="modal-header">
+            <h3>💬 Chat con IA</h3>
+            <button class="close-btn" id="closeBtn">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
+            <button class="send-btn" id="sendBtn">→</button>
+            <button class="voice-btn" id="micBtn">🎤</button>
+        </div>
+        <div class="chat-status" id="chatStatus"></div>
+    </div>
+
+    <!-- AR Chat Interface (IGUAL QUE PROYECTO FUNCIONANDO) -->
+    <div class="ui-overlay ar-chat" id="arChat">
+        <div class="ar-response" id="arResponse"></div>
+        <div class="ar-input-container">
+            <input type="text" id="arInput" placeholder="Pregunta en AR...">
+            <button class="ar-send-btn" id="arSendBtn">→</button>
+            <button class="voice-btn" id="arMicBtn">🎤</button>
+        </div>
+        <div class="ar-controls">
+            <button class="ar-close-btn" id="arRelocateBtn" style="margin-right:8px;">Recolocar</button>
+            <button class="ar-close-btn" id="arCloseBtn">Salir AR</button>
+        </div>
+    </div>
+
+    <!-- Status Overlay -->
+    <div class="ui-overlay status-display" id="statusDisplay">
+        <div class="status-content">
+            <div id="appStatus">🤖 Asistente Virtual Listo</div>
+            <div id="arStatus" class="hidden">📱 Modo AR Activo</div>
         </div>
     </div>
 
@@ -32,7 +105,8 @@
         }
     </script>
     
-    <!-- Script principal como módulo -->
-    <script type="module" src="app.js"></script>
+    <!-- Scripts de módulos -->
+    <script type="module" src="./js/app.js"></script>
+
 </body>
 </html>

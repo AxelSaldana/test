@@ -1,11 +1,15 @@
 /**
- * Asistente Virtual AR - SIMPLE Y DIRECTO
+ * Asistente Virtual AR - WebXR Puro (Sin Fallback)
  * Modelo: models/avatar_prueba.glb
  */
+// Importar Three.js
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 // ===== CONFIGURACIÓN SIMPLE =====
 const CONFIG = {
     MODEL: {
-        PATH: 'models/avatar_prueba.glb', // ← RUTA DIRECTA
+        PATH: 'avatar_prueba.glb', // ← Archivo en la raíz
         SCALE: 1,
         AUTO_ROTATE: false,
         ROTATE_SPEED: 0.005,
@@ -31,8 +35,9 @@ const CONFIG = {
         RECOGNITION_TIMEOUT: 15000
     },
     AR: {
-        // Si es true, saltar WebXR y usar cámara HTML + tap-to-place siempre
-        FORCE_FALLBACK: false
+        // WebXR puro, sin fallback a cámara HTML
+        FORCE_FALLBACK: false,
+        DISABLE_FALLBACK: true // Desactivar completamente el sistema de fallback
     }
 };
 
@@ -1600,18 +1605,8 @@ class VirtualAssistantApp {
         this.isInPreview = false;
 
         const startXR = async () => {
-            // Force fallback path if configured
-            if (CONFIG && CONFIG.AR && CONFIG.AR.FORCE_FALLBACK) {
-                console.warn('⚙️ FORCE_FALLBACK activo: usando cámara HTML.');
-                if (this.ui.camera) this.ui.camera.style.display = 'block';
-                if (this.model3dManager) {
-                    this.model3dManager.setVisible(true);
-                    this.model3dManager.setARMode(false);
-                    this.model3dManager.enableTapPlacement(true);
-                }
-                if (this.ui.arStatus) this.ui.arStatus.textContent = 'Fallback AR (cámara HTML)';
-                return;
-            }
+            // Solo WebXR, sin fallback
+            console.log('🚀 Iniciando WebXR AR (modo puro)...');
 
             let xrOk = false;
             if (this.model3dManager) {
@@ -1621,19 +1616,17 @@ class VirtualAssistantApp {
             }
 
             if (xrOk) {
-                // WebXR usa video passthrough; escondemos la cámara HTML
-                if (this.ui.camera) this.ui.camera.style.display = 'none';
-                // Desactivar el tap-placement legacy para AR XR
+                // WebXR usa video passthrough nativo
                 if (this.model3dManager) this.model3dManager.enableTapPlacement(false);
                 if (this.ui.arStatus) this.ui.arStatus.textContent = 'WebXR AR activo';
+                console.log('✅ WebXR AR iniciado correctamente');
             } else {
-                // Fallback: pseudo-AR con cámara HTML y raycast al plano Y=0
-                if (this.ui.camera) this.ui.camera.style.display = 'block';
-                if (this.model3dManager) {
-                    this.model3dManager.setVisible(true);
-                    this.model3dManager.enableTapPlacement(true);
-                }
-                if (this.ui.arStatus) this.ui.arStatus.textContent = 'Fallback AR (cámara HTML)';
+                // Sin fallback - mostrar error
+                console.error('❌ WebXR no disponible en este dispositivo');
+                if (this.ui.arStatus) this.ui.arStatus.textContent = '❌ WebXR no soportado';
+                alert('WebXR AR no está disponible en este dispositivo o navegador.\n\nRequiere:\n- Android con Chrome/Edge\n- iOS 15+ con Safari\n- HTTPS');
+                this.exitARMode();
+                return;
             }
         };
         startXR();
