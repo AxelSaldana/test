@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // ===== CONFIGURACIÓN SIMPLE =====
 const CONFIG = {
     MODEL: {
-        PATH: 'models/avatar_prueba.glb', // ← Archivo en la raíz
+        PATH: 'models/avatar_prueba.glb', // ← Archivo en carpeta models/
         SCALE: 1,
         AUTO_ROTATE: false,
         ROTATE_SPEED: 0.005,
@@ -502,13 +502,17 @@ class Model3DManager {
             this.setupCamera();
             this.setupLights();
 
-            // CARGAR TU MODELO DIRECTAMENTE
+            // CARGAR TU MODELO DIRECTAMENTE (SIN FALLBACK)
             try {
                 await this.loadModel();
                 console.log('✅ TU MODELO CARGADO!');
             } catch (error) {
-                console.warn('⚠️ No se pudo cargar tu modelo:', error);
-                this.createTemporaryModel();
+                console.error('❌ NO SE PUDO CARGAR avatar_prueba.glb:', error);
+                console.error('💡 VERIFICA:');
+                console.error('   1. El archivo avatar_prueba.glb está en la raíz del proyecto');
+                console.error('   2. Estás usando un servidor HTTP (no file://)');
+                console.error('   3. La ruta es correcta:', CONFIG.MODEL.PATH);
+                throw error; // NO crear modelo temporal, mostrar error real
             }
             // Activar controles interactivos
             this.enableControls();
@@ -516,9 +520,10 @@ class Model3DManager {
             this.startRenderLoop();
             console.log('✅ Model 3D Manager listo');
         } catch (error) {
-            console.error('❌ Error Model 3D:', error);
-            this.createTemporaryModel();
-            this.startRenderLoop();
+            console.error('❌ ERROR CRÍTICO - No se pudo inicializar Model3DManager:', error);
+            console.error('💡 Revisa la consola arriba para ver el error específico');
+            // NO crear modelo temporal - dejar que falle para ver el error real
+            throw error;
         }
     }
 
@@ -889,12 +894,16 @@ class Model3DManager {
                         // Guardar la pose completa de la retícula
                         this.model.matrix.copy(this.reticle.matrix);
                         this.model.matrix.decompose(this.model.position, this.model.quaternion, this.model.scale);
+                        
+                        // ASEGURAR que esté al ras del piso
+                        this.model.position.y = 0;
+                        
                         // Deshabilitar updates automáticos para mantener fijo
                         this.model.matrixAutoUpdate = false;
                         this.model.updateMatrix();
                         this.hasPlaced = true;
                         if (this.reticle) this.reticle.visible = false;
-                        console.log('📌 Modelo fijado en AR (hit-test sin anchor) en:', this.model.position);
+                        console.log('📌 Modelo fijado AL RAS DEL PISO en:', this.model.position);
                         return;
                     }
 
@@ -1009,7 +1018,20 @@ class Model3DManager {
                 const pose = hit.getPose(this.xrRefSpace);
                 if (pose && this.reticle) {
                     this.reticle.visible = !this.hasPlaced; // hide reticle after placement
+                    
+                    // Ajustar altura: Extraer posición y forzar Y = 0 (al ras del piso)
                     this.reticle.matrix.fromArray(pose.transform.matrix);
+                    const position = new THREE.Vector3();
+                    const quaternion = new THREE.Quaternion();
+                    const scale = new THREE.Vector3();
+                    this.reticle.matrix.decompose(position, quaternion, scale);
+                    
+                    // IMPORTANTE: Forzar Y = 0 para que esté AL RAS DEL PISO
+                    position.y = 0;
+                    
+                    // Reconstruir matriz con la nueva posición
+                    this.reticle.matrix.compose(position, quaternion, scale);
+                    
                     this._xrHits++;
                     // Aviso UI: se detecta plano
                     try { this.canvas?.dispatchEvent(new CustomEvent('xr-plane-detected')); } catch (_) { }
