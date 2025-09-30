@@ -59,22 +59,22 @@ function setupThreeJS() {
     // Añadir luz ambiental
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
-
     // Añadir luz direccional
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
     directionalLight.position.set(0, 5, 5);
     scene.add(directionalLight);
 
-    // Crear retículo (indicador de donde se colocará el modelo)
+    // Crear retículo para indicar donde se colocará el modelo
     createReticle();
 
-    // Crear un avatar simple (cubo por defecto, puedes reemplazarlo con un modelo GLTF)
-    createAvatar();
+    // Cargar el modelo GLTF
+    loadGLTFModel();
 
     // Manejar redimensionamiento
     window.addEventListener('resize', onWindowResize);
 }
 
+// Cargar un modelo GLTF
 // Crear retículo para indicar donde se colocará el modelo
 function createReticle() {
     const geometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
@@ -139,29 +139,36 @@ function createAvatar() {
     
     model = avatarGroup;
     scene.add(model);
+    
+    console.log('Avatar creado y añadido a la escena:', model);
 }
 
-// Alternativamente, cargar un modelo GLTF (descomenta si tienes un archivo .glb)
-/*
+// Cargar modelo GLTF
 function loadGLTFModel() {
     const loader = new GLTFLoader();
+    console.log('Iniciando carga del modelo avatar_prueba.glb...');
+    
     loader.load(
-        'tu-modelo.glb', // Reemplaza con la ruta de tu modelo
+        'avatar_prueba.glb',
         (gltf) => {
             model = gltf.scene;
-            model.scale.set(0.5, 0.5, 0.5);
+            model.scale.set(0.3, 0.3, 0.3); // Ajusta el tamaño según necesites
             model.visible = false;
             scene.add(model);
+            console.log('Modelo cargado exitosamente:', model);
         },
         (xhr) => {
-            console.log((xhr.loaded / xhr.total * 100) + '% cargado');
+            const percent = (xhr.loaded / xhr.total * 100).toFixed(2);
+            console.log(`Cargando modelo: ${percent}%`);
         },
         (error) => {
             console.error('Error cargando modelo:', error);
+            // Crear avatar simple como fallback
+            console.log('Creando avatar simple como fallback...');
+            createAvatar();
         }
     );
 }
-*/
 
 // Manejar click en botón AR
 async function onARButtonClick() {
@@ -237,25 +244,38 @@ function onSessionEnded() {
 
 // Cuando el usuario toca la pantalla en AR
 function onSelect() {
+    console.log('onSelect llamado - reticle.visible:', reticle.visible, 'modelPlaced:', modelPlaced, 'model:', model);
+    
+    if (!model) {
+        console.warn('Modelo aún no cargado, espera un momento...');
+        return;
+    }
+    
     if (reticle.visible && !modelPlaced) {
         // Colocar el modelo en la posición del retículo
         model.position.setFromMatrixPosition(reticle.matrix);
         model.visible = true;
         modelPlaced = true;
         
+        console.log('Modelo colocado en posición:', model.position);
+        console.log('Modelo visible:', model.visible);
+        console.log('Escala del modelo:', model.scale);
+        
         // Ocultar retículo después de colocar el modelo
         reticle.visible = false;
         instructionsDiv.style.display = 'none';
         
+        // Guardar la escala original
+        const originalScale = model.scale.clone();
+        
         // Añadir una pequeña animación de aparición
         model.scale.set(0, 0, 0);
-        animateModelAppearance();
+        animateModelAppearance(originalScale);
     }
 }
 
 // Animar la aparición del modelo
-function animateModelAppearance() {
-    const targetScale = 0.5;
+function animateModelAppearance(targetScaleVector) {
     const duration = 500; // ms
     const startTime = Date.now();
     
@@ -266,8 +286,11 @@ function animateModelAppearance() {
         // Easing suave
         const easeProgress = 1 - Math.pow(1 - progress, 3);
         
-        const scale = easeProgress * targetScale;
-        model.scale.set(scale, scale, scale);
+        const scaleX = easeProgress * targetScaleVector.x;
+        const scaleY = easeProgress * targetScaleVector.y;
+        const scaleZ = easeProgress * targetScaleVector.z;
+        
+        model.scale.set(scaleX, scaleY, scaleZ);
         
         if (progress < 1) {
             requestAnimationFrame(animate);
@@ -280,29 +303,29 @@ function animateModelAppearance() {
 // Loop de renderizado
 function render(timestamp, frame) {
     if (frame) {
-        // Si el modelo ya está colocado, no mostrar el retículo
+        // Si el modelo ya está colocado, solo ocultar el retículo
         if (modelPlaced) {
             reticle.visible = false;
-            return;
-        }
+        } else {
+            // Obtener resultados de hit test solo si el modelo no está colocado
+            if (hitTestSource) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-        // Obtener resultados de hit test
-        if (hitTestSource) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(xrRefSpace);
 
-            if (hitTestResults.length > 0) {
-                const hit = hitTestResults[0];
-                const pose = hit.getPose(xrRefSpace);
-
-                // Actualizar posición del retículo
-                reticle.visible = true;
-                reticle.matrix.fromArray(pose.transform.matrix);
-            } else {
-                reticle.visible = false;
+                    // Actualizar posición del retículo
+                    reticle.visible = true;
+                    reticle.matrix.fromArray(pose.transform.matrix);
+                } else {
+                    reticle.visible = false;
+                }
             }
         }
     }
 
+    // Siempre renderizar la escena
     renderer.render(scene, camera);
 }
 
