@@ -851,10 +851,10 @@ class Model3DManager {
             this._xrStartTs = performance.now ? performance.now() : Date.now();
 
             // Input: place model on select. Prefer anchors; if no plane hit, fallback 1.5m in front of camera
-            this._onXRSelect = (ev) => {
+            this._onXRSelect = async (ev) => {
                 try {
-                    // If we have a recent hit result, try to create an anchor
-                    const frame = this._lastXRFrame;
+                    // Obtener el frame del evento de forma segura
+                    const frame = this._currentFrame || this._lastXRFrame;
                     if (this._lastHitResult && frame && typeof this._lastHitResult.createAnchor === 'function') {
                         this._lastHitResult.createAnchor().then((anchor) => {
                             this.xrAnchor = anchor;
@@ -898,30 +898,31 @@ class Model3DManager {
                         return;
                     }
 
-                    // Fallback MEJORADO: colocar al frente incluso sin hit-test
+                    // Fallback MEJORADO: usar la posición guardada de la cámara
                     console.log('💡 Sin superficie detectada - Colocando modelo al frente');
-                    if (frame && this.xrRefSpace) {
-                        const viewerPose = frame.getViewerPose(this.xrRefSpace);
-                        if (viewerPose && viewerPose.views && viewerPose.views[0]) {
-                            const m = new THREE.Matrix4().fromArray(viewerPose.views[0].transform.matrix);
-                            const pos = new THREE.Vector3().setFromMatrixPosition(m);
-                            const dir = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
-                            
-                            // Colocar 1.2m al frente y a la altura de los ojos menos 0.3m
-                            const fallbackPos = pos.clone().add(dir.multiplyScalar(1.2));
-                            fallbackPos.y -= 0.3; // Bajar un poco para que esté a buena altura
-                            
-                            this.model.position.copy(fallbackPos);
-                            this.model.quaternion.setFromRotationMatrix(new THREE.Matrix4().extractRotation(m));
-                            
-                            // Deshabilitar updates automáticos para mantener fijo
-                            this.model.matrixAutoUpdate = false;
-                            this.model.updateMatrix();
-                            this.hasPlaced = true;
-                            console.log('📌 Modelo colocado al frente en:', fallbackPos);
-                            console.log('👍 ¡Listo! El avatar está fijo en el espacio');
-                            try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-fallback')); } catch (_) {}
-                        }
+                    if (this._lastCameraPosition && this._lastCameraDirection) {
+                        // Usar la última posición conocida de la cámara
+                        const pos = this._lastCameraPosition.clone();
+                        const dir = this._lastCameraDirection.clone();
+                        
+                        // Colocar 1.2m al frente y a la altura de los ojos menos 0.3m
+                        const fallbackPos = pos.clone().add(dir.multiplyScalar(1.2));
+                        fallbackPos.y -= 0.3; // Bajar un poco para que esté a buena altura
+                        
+                        this.model.position.copy(fallbackPos);
+                        // Hacer que el modelo mire hacia la cámara
+                        this.model.lookAt(pos);
+                        this.model.rotateY(Math.PI); // Dar la vuelta para que mire hacia ti
+                        
+                        // Deshabilitar updates automáticos para mantener fijo
+                        this.model.matrixAutoUpdate = false;
+                        this.model.updateMatrix();
+                        this.hasPlaced = true;
+                        console.log('📌 Modelo colocado al frente en:', fallbackPos);
+                        console.log('👍 ¡Listo! El avatar está fijo en el espacio');
+                        try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-fallback')); } catch (_) {}
+                    } else {
+                        console.warn('⚠️ No hay posición de cámara guardada');
                     }
                 } catch (e) {
                     console.warn('onXRSelect fallback error:', e);
@@ -988,6 +989,17 @@ class Model3DManager {
 
         const session = frame.session;
         this._lastXRFrame = frame;
+        
+        // Guardar posición de cámara en cada frame para colocación fallback
+        if (this.xrRefSpace) {
+            const viewerPose = frame.getViewerPose(this.xrRefSpace);
+            if (viewerPose && viewerPose.views && viewerPose.views[0]) {
+                const m = new THREE.Matrix4().fromArray(viewerPose.views[0].transform.matrix);
+                this._lastCameraPosition = new THREE.Vector3().setFromMatrixPosition(m);
+                this._lastCameraDirection = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
+            }
+        }
+        
         // Update hit-test
         if (this.xrHitTestSource && this.xrRefSpace) {
             const results = frame.getHitTestResults(this.xrHitTestSource);
