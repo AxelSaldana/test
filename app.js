@@ -246,7 +246,11 @@ function onSelect() {
             // OPCIÓN 1: Copiar posición del retículo (con o sin superficie detectada)
             model.matrix.copy(reticle.matrix);
             model.matrix.decompose(model.position, model.quaternion, model.scale);
-            console.log('📌 Modelo colocado usando retículo');
+            
+            // IMPORTANTE: Ajustar altura igual que la retícula
+            model.position.y = -2.5; // Mismo nivel que retícula
+            
+            console.log('📌 Modelo colocado usando retículo en Y:', model.position.y);
         } else if (lastCameraPosition && lastCameraDirection) {
             // OPCIÓN 2: Colocar al frente si no hay retículo
             console.log('💡 Sin retículo - Colocando modelo al frente AL RAS DEL PISO');
@@ -254,7 +258,7 @@ function onSelect() {
                 lastCameraDirection.clone().multiplyScalar(1.2)
             );
             // IMPORTANTE: Bajar más al piso
-            fallbackPos.y = -3; // Bajar 50cm más
+            fallbackPos.y = -2.5; // Bajar 50cm más
 
             model.position.copy(fallbackPos);
             model.lookAt(lastCameraPosition);
@@ -305,9 +309,17 @@ function render(timestamp, frame) {
                     const hit = hitTestResults[0];
                     const hitPose = hit.getPose(xrRefSpace);
 
-                    // Actualizar posición del retículo
+                    // Actualizar posición del retículo y ajustar altura
                     reticle.visible = true;
                     reticle.matrix.fromArray(hitPose.transform.matrix);
+                    
+                    // Ajustar altura de la retícula cuando detecta superficie
+                    const pos = new THREE.Vector3();
+                    const quat = new THREE.Quaternion();
+                    const scale = new THREE.Vector3();
+                    reticle.matrix.decompose(pos, quat, scale);
+                    pos.y = -2.5; // Mismo nivel configurado
+                    reticle.matrix.compose(pos, quat, scale);
                 } else {
                     // MEJORADO: Mostrar retículo AL RAS DEL PISO si no hay detección
                     if (lastCameraPosition && lastCameraDirection) {
@@ -315,7 +327,7 @@ function render(timestamp, frame) {
                             lastCameraDirection.clone().multiplyScalar(1.5)
                         );
                         // IMPORTANTE: Bajar más al piso
-                        fallbackPos.y = -0.5; // Bajar 50cm más
+                        fallbackPos.y = -2.5; // Mismo nivel configurado
 
                         reticle.position.copy(fallbackPos);
                         reticle.rotation.x = -Math.PI / 2;

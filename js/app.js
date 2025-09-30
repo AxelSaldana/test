@@ -876,6 +876,10 @@ class Model3DManager {
                                 // Guardar la pose completa de la retícula
                                 this.model.matrix.copy(this.reticle.matrix);
                                 this.model.matrix.decompose(this.model.position, this.model.quaternion, this.model.scale);
+                                
+                                // IMPORTANTE: Ajustar altura igual que la retícula
+                                this.model.position.y = -2.5; // Mismo nivel que retícula
+                                
                                 // Deshabilitar updates automáticos para mantener fijo
                                 this.model.matrixAutoUpdate = false;
                                 this.model.updateMatrix();
@@ -895,7 +899,7 @@ class Model3DManager {
                         this.model.matrix.decompose(this.model.position, this.model.quaternion, this.model.scale);
 
                         // ASEGURAR que esté al nivel del piso ajustado
-                        this.model.position.y = -3; // Mismo nivel que retícula
+                        this.model.position.y = -2.5; // Mismo nivel que retícula
 
                         // Deshabilitar updates automáticos para mantener fijo
                         this.model.matrixAutoUpdate = false;
@@ -1033,7 +1037,7 @@ class Model3DManager {
                     this.reticle.matrix.decompose(position, quaternion, scale);
 
                     // IMPORTANTE: Bajar retícula al piso (ajustable según tu modelo)
-                    position.y = -0.5; // Bajar 50cm más
+                    position.y = -2.5; // Bajar 50cm más
 
                     // Reconstruir matriz con la nueva posición
                     this.reticle.matrix.compose(position, quaternion, scale);
@@ -1057,7 +1061,7 @@ class Model3DManager {
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.5));
 
                         // IMPORTANTE: Bajar al piso en fallback
-                        fallbackPos.y = -3; // Bajar 50cm más
+                        fallbackPos.y = -2.5; // Bajar 50cm más
 
                         this.reticle.visible = true;
                         this.reticle.matrix.identity();
