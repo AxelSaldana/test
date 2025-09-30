@@ -12,7 +12,39 @@ let modelPlaced = false;
 let reticle = null;
 let hitTestSource = null;
 let hitTestSourceRequested = false;
-
+const CONFIG = {
+    MODEL: {
+        PATH: 'models/avatar_prueba.glb', // ← Archivo en la raíz
+        SCALE: 1,
+        AUTO_ROTATE: false,
+        ROTATE_SPEED: 0.005,
+        ANIMATION_SPEED: 3, // velocidad 20% más rápida
+        ANIMATIONS: {
+            IDLE: 'Animation',
+            TALKING: 'animation',
+            THINKING: 'animation',
+            LISTENING: 'animation'
+        }
+    },
+    GEMINI: {
+        API_KEY: 'AIzaSyCo0VMAPnglts8T0e1Ap8x7MbtdhgsFrq4',
+        MODEL: 'gemini-2.0-flash-001',
+        MAX_TOKENS: 2000,
+        TEMPERATURE: 0.9
+    },
+    SPEECH: {
+        LANGUAGE: 'es-ES',
+        VOICE_RATE: 1.0,
+        VOICE_PITCH: 1.0,
+        VOICE_VOLUME: 1.0,
+        RECOGNITION_TIMEOUT: 15000
+    },
+    AR: {
+        // WebXR puro, sin fallback a cámara HTML
+        FORCE_FALLBACK: false,
+        DISABLE_FALLBACK: true // Desactivar completamente el sistema de fallback
+    }
+};
 // Inicializar la aplicación
 function init() {
     arButton = document.getElementById('ar-button');
@@ -100,10 +132,10 @@ function loadGLTFModel() {
     console.log('Iniciando carga del modelo avatar_prueba.glb...');
 
     loader.load(
-        'avatar_prueba.glb',
+        CONFIG.MODEL.PATH,
         (gltf) => {
             model = gltf.scene;
-            model.scale.set(1, 1, 1); // Tamaño normal del modelo
+            model.scale.set(CONFIG.MODEL.SCALE, CONFIG.MODEL.SCALE, CONFIG.MODEL.SCALE); // Tamaño normal del modelo
             model.visible = false;
             scene.add(model);
             console.log('Modelo cargado exitosamente:', model);
@@ -210,11 +242,13 @@ function onSelect() {
             console.log('📌 Modelo colocado usando retículo');
         } else if (lastCameraPosition && lastCameraDirection) {
             // OPCIÓN 2: Colocar al frente si no hay retículo
-            console.log('💡 Sin retículo - Colocando modelo al frente');
+            console.log('💡 Sin retículo - Colocando modelo al frente AL RAS DEL PISO');
             const fallbackPos = lastCameraPosition.clone().add(
                 lastCameraDirection.clone().multiplyScalar(1.2)
             );
-            fallbackPos.y -= 0.3; // Bajar un poco
+            // IMPORTANTE: Poner AL RAS DEL PISO (Y = 0)
+            fallbackPos.y = 0;
+
             model.position.copy(fallbackPos);
             model.lookAt(lastCameraPosition);
             model.rotateY(Math.PI); // Girar para que mire hacia ti
@@ -251,7 +285,7 @@ function render(timestamp, frame) {
                 new THREE.Matrix4().extractRotation(viewMatrix)
             );
         }
-        
+
         // Si el modelo ya está colocado, solo ocultar el retículo
         if (modelPlaced) {
             reticle.visible = false;
@@ -268,11 +302,14 @@ function render(timestamp, frame) {
                     reticle.visible = true;
                     reticle.matrix.fromArray(hitPose.transform.matrix);
                 } else {
-                    // MEJORADO: Mostrar retículo al frente si no hay detección
+                    // MEJORADO: Mostrar retículo AL RAS DEL PISO si no hay detección
                     if (lastCameraPosition && lastCameraDirection) {
                         const fallbackPos = lastCameraPosition.clone().add(
                             lastCameraDirection.clone().multiplyScalar(1.5)
                         );
+                        // IMPORTANTE: Poner al ras del piso (Y = 0)
+                        fallbackPos.y = 0;
+
                         reticle.position.copy(fallbackPos);
                         reticle.rotation.x = -Math.PI / 2;
                         reticle.visible = true;

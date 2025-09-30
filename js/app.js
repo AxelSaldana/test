@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 // ===== CONFIGURACIÓN SIMPLE =====
 const CONFIG = {
     MODEL: {
-        PATH: 'avatar_prueba.glb', // ← Archivo en la raíz
+        PATH: 'models/avatar_prueba.glb', // ← Archivo en la raíz
         SCALE: 1,
         AUTO_ROTATE: false,
         ROTATE_SPEED: 0.005,
@@ -621,7 +621,7 @@ class Model3DManager {
         // Brazos
         const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 16);
         const armMaterial = new THREE.MeshStandardMaterial({ color: 0x4a90e2 });
-        
+
         const leftArm = new THREE.Mesh(armGeometry, armMaterial);
         leftArm.position.set(-0.4, 0.4, 0);
         leftArm.rotation.z = Math.PI / 6;
@@ -635,7 +635,7 @@ class Model3DManager {
         // Piernas
         const legGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.6, 16);
         const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
-        
+
         const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
         leftLeg.position.set(-0.15, -0.3, 0);
         avatarGroup.add(leftLeg);
@@ -671,7 +671,7 @@ class Model3DManager {
             this.renderer.xr.enabled = true;
         }
         // Ensure full transparency in AR
-        try { this.renderer.domElement.style.backgroundColor = 'transparent'; } catch (_) {}
+        try { this.renderer.domElement.style.backgroundColor = 'transparent'; } catch (_) { }
     }
 
     setupScene() {
@@ -816,7 +816,7 @@ class Model3DManager {
             console.log('✅ Sesión WebXR iniciada. environmentBlendMode =', this.xrSession.environmentBlendMode);
             if (this.xrSession.environmentBlendMode && this.xrSession.environmentBlendMode === 'opaque') {
                 console.warn('El modo de mezcla es "opaque" (no hay passthrough de cámara). Se usará el fallback.');
-                try { await this.stopARSession(); } catch (_) {}
+                try { await this.stopARSession(); } catch (_) { }
                 return false;
             }
 
@@ -865,7 +865,7 @@ class Model3DManager {
                             if (this.model) this.model.matrixAutoUpdate = false;
                             console.log('📌 Modelo anclado con XRAnchor');
                             // Aviso UI
-                            try { this.canvas?.dispatchEvent(new CustomEvent('xr-anchored')); } catch (_) {}
+                            try { this.canvas?.dispatchEvent(new CustomEvent('xr-anchored')); } catch (_) { }
                         }).catch((e) => {
                             console.warn('No se pudo crear anchor, usando posición de retícula:', e);
                             if (this.model && this.reticle) {
@@ -878,10 +878,10 @@ class Model3DManager {
                                 this.hasPlaced = true;
                                 if (this.reticle) this.reticle.visible = false;
                                 console.log('📌 Modelo fijado en AR (sin anchor) en:', this.model.position);
-                                try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-no-anchor')); } catch (_) {}
+                                try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-no-anchor')); } catch (_) { }
                             }
                         });
-                        return;                    
+                        return;
                     }
 
                     // Si no tenemos hit anclable pero sí retícula visible, colocar en esa pose
@@ -904,23 +904,23 @@ class Model3DManager {
                         // Usar la última posición conocida de la cámara
                         const pos = this._lastCameraPosition.clone();
                         const dir = this._lastCameraDirection.clone();
-                        
+
                         // Colocar 1.2m al frente y a la altura de los ojos menos 0.3m
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.2));
                         fallbackPos.y -= 0.3; // Bajar un poco para que esté a buena altura
-                        
+
                         this.model.position.copy(fallbackPos);
                         // Hacer que el modelo mire hacia la cámara
                         this.model.lookAt(pos);
                         this.model.rotateY(Math.PI); // Dar la vuelta para que mire hacia ti
-                        
+
                         // Deshabilitar updates automáticos para mantener fijo
                         this.model.matrixAutoUpdate = false;
                         this.model.updateMatrix();
                         this.hasPlaced = true;
                         console.log('📌 Modelo colocado al frente en:', fallbackPos);
                         console.log('👍 ¡Listo! El avatar está fijo en el espacio');
-                        try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-fallback')); } catch (_) {}
+                        try { this.canvas?.dispatchEvent(new CustomEvent('xr-placed-fallback')); } catch (_) { }
                     } else {
                         console.warn('⚠️ No hay posición de cámara guardada');
                     }
@@ -959,7 +959,7 @@ class Model3DManager {
         try {
             if (this.xrSession) {
                 if (this._onXRSelect) {
-                    try { this.xrSession.removeEventListener('select', this._onXRSelect); } catch (_) {}
+                    try { this.xrSession.removeEventListener('select', this._onXRSelect); } catch (_) { }
                 }
                 await this.xrSession.end();
             }
@@ -989,7 +989,7 @@ class Model3DManager {
 
         const session = frame.session;
         this._lastXRFrame = frame;
-        
+
         // Guardar posición de cámara en cada frame para colocación fallback
         if (this.xrRefSpace) {
             const viewerPose = frame.getViewerPose(this.xrRefSpace);
@@ -999,7 +999,7 @@ class Model3DManager {
                 this._lastCameraDirection = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
             }
         }
-        
+
         // Update hit-test
         if (this.xrHitTestSource && this.xrRefSpace) {
             const results = frame.getHitTestResults(this.xrHitTestSource);
@@ -1012,7 +1012,7 @@ class Model3DManager {
                     this.reticle.matrix.fromArray(pose.transform.matrix);
                     this._xrHits++;
                     // Aviso UI: se detecta plano
-                    try { this.canvas?.dispatchEvent(new CustomEvent('xr-plane-detected')); } catch (_) {}
+                    try { this.canvas?.dispatchEvent(new CustomEvent('xr-plane-detected')); } catch (_) { }
                 }
             } else if (this.reticle) {
                 // If no hits, try to place reticle 1.5m in front of the camera for visual confirmation
@@ -1076,7 +1076,7 @@ class Model3DManager {
                     try {
                         this.ui.arStatus.classList.remove('hidden');
                         this.ui.arStatus.textContent = 'Sin plano: toca para colocar al frente o mueve el teléfono';
-                    } catch (_) {}
+                    } catch (_) { }
                 }
             }
             // Only report once
@@ -1087,7 +1087,7 @@ class Model3DManager {
     createReticle() {
         // Retículo azul brillante MUY GRANDE para mejor visibilidad
         const geo = new THREE.RingGeometry(0.2, 0.3, 32).rotateX(-Math.PI / 2);
-        const mat = new THREE.MeshBasicMaterial({ 
+        const mat = new THREE.MeshBasicMaterial({
             color: 0x00BFFF,  // Azul brillante (Deep Sky Blue)
             side: THREE.DoubleSide,
             transparent: true,
@@ -1097,7 +1097,7 @@ class Model3DManager {
         this.reticle.matrixAutoUpdate = false;
         this.reticle.visible = false;
         this.scene.add(this.reticle);
-        
+
         console.log('🎯 Retículo azul GRANDE creado (0.2-0.3m)');
     }
 
