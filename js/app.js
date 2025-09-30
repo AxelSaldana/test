@@ -590,7 +590,8 @@ class Model3DManager {
                 },
                 (error) => {
                     console.error('❌ ERROR CARGANDO TU MODELO:', error);
-                    console.error('Verifica que el archivo esté en: models/avatar_prueba.glb');
+                    console.error('Ruta buscada:', CONFIG.MODEL.PATH);
+                    console.error('Verifica que el archivo avatar_prueba.glb esté en la raíz del proyecto');
                     reject(error);
                 }
             );
@@ -1028,12 +1029,20 @@ class Model3DManager {
     }
 
     createReticle() {
-        const geo = new THREE.RingGeometry(0.12, 0.15, 32).rotateX(-Math.PI / 2);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x00ff88, side: THREE.DoubleSide });
+        // Retículo azul brillante y más grande para mejor visibilidad
+        const geo = new THREE.RingGeometry(0.15, 0.20, 32).rotateX(-Math.PI / 2);
+        const mat = new THREE.MeshBasicMaterial({ 
+            color: 0x00BFFF,  // Azul brillante (Deep Sky Blue)
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.9
+        });
         this.reticle = new THREE.Mesh(geo, mat);
         this.reticle.matrixAutoUpdate = false;
         this.reticle.visible = false;
         this.scene.add(this.reticle);
+        
+        console.log('🎯 Retículo azul creado');
     }
 
     enableTapPlacement(enable = true) {
@@ -1729,7 +1738,7 @@ class VirtualAssistantApp {
             if (this.model3dManager.reticle) this.model3dManager.reticle.visible = true;
             // Hint en UI
             if (this.ui && this.ui.arResponse) {
-                this.ui.arResponse.innerHTML = '<div style="color:#00ff88">Recoloca: mueve el teléfono para encontrar una superficie o toca para colocar al frente.</div>';
+                this.ui.arResponse.innerHTML = '<div style="color:#00BFFF">🎯 Recoloca: mueve el teléfono lentamente para encontrar una superficie. Busca el <strong>círculo azul</strong> y toca para colocar.</div>';
             }
         });
         if (this.ui.arMicBtn) this.ui.arMicBtn.addEventListener('click', () => this.startVoiceInteraction(true));
@@ -1986,10 +1995,13 @@ class VirtualAssistantApp {
             const welcomeMsg = await this.gemini.getARWelcomeMessage();
 
             this.ui.arResponse.innerHTML = `
-                <div style="color: #00ff88; font-size: 18px; margin-bottom: 10px;">
+                <div style="color: #00BFFF; font-size: 18px; margin-bottom: 10px;">
                     🤖 ¡Avatar con Gemini 2.0 en AR!
                 </div>
-                <div>${welcomeMsg}</div>
+                <div style="margin-bottom: 10px;">${welcomeMsg}</div>
+                <div style="color: #00BFFF; font-size: 14px;">
+                    🎯 <strong>Busca el círculo azul</strong> y toca para colocar el avatar
+                </div>
             `;
 
             if (this.speech) {
@@ -2004,8 +2016,12 @@ class VirtualAssistantApp {
             console.error('Error bienvenida AR:', error);
             if (this.ui.arResponse) {
                 this.ui.arResponse.innerHTML = `
-                    <div style="color: #ff6b6b;">
-                        ❌ Error obteniendo bienvenida de Gemini 2.0
+                    <div style="color: #00BFFF; font-size: 18px; margin-bottom: 10px;">
+                        🎯 Modo AR Activo
+                    </div>
+                    <div style="color: #00BFFF;">
+                        Mueve el teléfono lentamente para detectar superficies.<br>
+                        <strong>Busca el círculo azul</strong> y toca para colocar el avatar.
                     </div>
                 `;
             }
