@@ -903,6 +903,13 @@ class Model3DManager {
                         this.model.updateMatrix();
                         this.hasPlaced = true;
                         if (this.reticle) this.reticle.visible = false;
+                        
+                        // Ocultar indicador de posición y mostrar mensaje de confirmación
+                        if (this.ui && this.ui.arStatus) {
+                            this.ui.arStatus.innerHTML = '✅ Modelo fijado en el piso';
+                            setTimeout(() => this.ui.arStatus && this.ui.arStatus.classList.add('hidden'), 2000);
+                        }
+                        
                         console.log('📌 Modelo fijado AL RAS DEL PISO en:', this.model.position);
                         return;
                     }
@@ -1032,6 +1039,9 @@ class Model3DManager {
                     // Reconstruir matriz con la nueva posición
                     this.reticle.matrix.compose(position, quaternion, scale);
                     
+                    // Actualizar UI con posición de la retícula
+                    this._updateReticlePositionUI(position);
+                    
                     this._xrHits++;
                     // Aviso UI: se detecta plano
                     try { this.canvas?.dispatchEvent(new CustomEvent('xr-plane-detected')); } catch (_) { }
@@ -1046,9 +1056,16 @@ class Model3DManager {
                         const pos = new THREE.Vector3().setFromMatrixPosition(m);
                         const dir = new THREE.Vector3(0, 0, -1).applyMatrix4(new THREE.Matrix4().extractRotation(m));
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.5));
+                        
+                        // IMPORTANTE: Al ras del piso también en fallback
+                        fallbackPos.y = 0;
+                        
                         this.reticle.visible = true;
                         this.reticle.matrix.identity();
                         this.reticle.matrix.setPosition(fallbackPos);
+                        
+                        // Actualizar UI con posición fallback
+                        this._updateReticlePositionUI(fallbackPos);
                     }
                 } else {
                     this.reticle.visible = false && !this.hasPlaced;
@@ -1121,6 +1138,24 @@ class Model3DManager {
         this.scene.add(this.reticle);
 
         console.log('🎯 Retículo azul GRANDE creado (0.2-0.3m)');
+    }
+
+    _updateReticlePositionUI(position) {
+        // Mostrar posición de la retícula en la UI
+        if (this.ui && this.ui.arStatus) {
+            try {
+                this.ui.arStatus.classList.remove('hidden');
+                const x = position.x.toFixed(2);
+                const y = position.y.toFixed(2);
+                const z = position.z.toFixed(2);
+                this.ui.arStatus.innerHTML = `
+                    <div style="font-family: monospace; font-size: 14px;">
+                        📍 Retícula:<br>
+                        X: ${x}m | Y: ${y}m | Z: ${z}m
+                    </div>
+                `;
+            } catch (_) { }
+        }
     }
 
     enableTapPlacement(enable = true) {
