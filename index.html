@@ -20,18 +20,19 @@
         </div>
     </div>
 
-    <!-- Three.js desde CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+    <!-- Three.js desde CDN - Usar módulos ES6 -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
     
-    <!-- GLTFLoader para cargar modelos 3D -->
-    <script>
-        // Cargar GLTFLoader desde CDN
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/loaders/GLTFLoader.js';
-        document.head.appendChild(script);
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.152.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.152.0/examples/jsm/"
+            }
+        }
     </script>
     
-    <!-- Script principal -->
-    <script src="app.js"></script>
+    <!-- Script principal como módulo -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>

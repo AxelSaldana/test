@@ -1,3 +1,7 @@
+// Importar Three.js
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 // Variables globales
 let scene, camera, renderer, gl;
 let arButton, statusText, instructionsDiv;
@@ -140,7 +144,7 @@ function createAvatar() {
 // Alternativamente, cargar un modelo GLTF (descomenta si tienes un archivo .glb)
 /*
 function loadGLTFModel() {
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
     loader.load(
         'tu-modelo.glb', // Reemplaza con la ruta de tu modelo
         (gltf) => {
