@@ -895,7 +895,7 @@ class Model3DManager {
                         this.model.matrix.decompose(this.model.position, this.model.quaternion, this.model.scale);
 
                         // ASEGURAR que esté al nivel del piso ajustado
-                        this.model.position.y = -1; // Mismo nivel que retícula
+                        this.model.position.y = -3; // Mismo nivel que retícula
 
                         // Deshabilitar updates automáticos para mantener fijo
                         this.model.matrixAutoUpdate = false;
@@ -1057,7 +1057,7 @@ class Model3DManager {
                         const fallbackPos = pos.clone().add(dir.multiplyScalar(1.5));
 
                         // IMPORTANTE: Bajar al piso en fallback
-                        fallbackPos.y = -0.5; // Bajar 50cm más
+                        fallbackPos.y = -3; // Bajar 50cm más
 
                         this.reticle.visible = true;
                         this.reticle.matrix.identity();

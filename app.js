@@ -254,7 +254,7 @@ function onSelect() {
                 lastCameraDirection.clone().multiplyScalar(1.2)
             );
             // IMPORTANTE: Bajar más al piso
-            fallbackPos.y = -1; // Bajar 50cm más
+            fallbackPos.y = -3; // Bajar 50cm más
 
             model.position.copy(fallbackPos);
             model.lookAt(lastCameraPosition);
