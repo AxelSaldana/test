@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXR AR - Avatar Fijo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <div id="info">
+            <h1>Realidad Aumentada WebXR</h1>
+            <p id="status">Verificando compatibilidad...</p>
+        </div>
+        
+        <button id="ar-button" disabled>Iniciar AR</button>
+        
+        <div id="instructions" style="display: none;">
+            <p>👆 Toca la pantalla para colocar el avatar en el espacio</p>
+        </div>
+    </div>
+
+    <!-- Three.js desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+    
+    <!-- GLTFLoader para cargar modelos 3D -->
+    <script>
+        // Cargar GLTFLoader desde CDN
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/three@0.152.0/examples/js/loaders/GLTFLoader.js';
+        document.head.appendChild(script);
+    </script>
+    
+    <!-- Script principal -->
+    <script src="app.js"></script>
+</body>
+</html>
