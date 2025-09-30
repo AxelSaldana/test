@@ -152,10 +152,11 @@ function loadGLTFModel() {
         'avatar_prueba.glb',
         (gltf) => {
             model = gltf.scene;
-            model.scale.set(0.3, 0.3, 0.3); // Ajusta el tamaño según necesites
+            model.scale.set(1, 1, 1); // Tamaño normal del modelo
             model.visible = false;
             scene.add(model);
             console.log('Modelo cargado exitosamente:', model);
+            console.log('Tamaño inicial:', model.scale);
         },
         (xhr) => {
             const percent = (xhr.loaded / xhr.total * 100).toFixed(2);
@@ -252,52 +253,27 @@ function onSelect() {
     }
     
     if (reticle.visible && !modelPlaced) {
-        // Colocar el modelo en la posición del retículo
-        model.position.setFromMatrixPosition(reticle.matrix);
+        // CLAVE: Copiar la matriz completa del retículo al modelo
+        model.matrix.copy(reticle.matrix);
+        
+        // Descomponer la matriz en position, quaternion y scale
+        model.matrix.decompose(model.position, model.quaternion, model.scale);
+        
+        // IMPORTANTE: Desactivar matrixAutoUpdate para mantener el modelo fijo
+        model.matrixAutoUpdate = false;
+        model.updateMatrix();
+        
         model.visible = true;
         modelPlaced = true;
         
-        console.log('Modelo colocado en posición:', model.position);
+        console.log('📌 Modelo fijado en AR en posición:', model.position);
         console.log('Modelo visible:', model.visible);
         console.log('Escala del modelo:', model.scale);
         
         // Ocultar retículo después de colocar el modelo
         reticle.visible = false;
         instructionsDiv.style.display = 'none';
-        
-        // Guardar la escala original
-        const originalScale = model.scale.clone();
-        
-        // Añadir una pequeña animación de aparición
-        model.scale.set(0, 0, 0);
-        animateModelAppearance(originalScale);
     }
-}
-
-// Animar la aparición del modelo
-function animateModelAppearance(targetScaleVector) {
-    const duration = 500; // ms
-    const startTime = Date.now();
-    
-    function animate() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing suave
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        
-        const scaleX = easeProgress * targetScaleVector.x;
-        const scaleY = easeProgress * targetScaleVector.y;
-        const scaleZ = easeProgress * targetScaleVector.z;
-        
-        model.scale.set(scaleX, scaleY, scaleZ);
-        
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        }
-    }
-    
-    animate();
 }
 
 // Loop de renderizado
