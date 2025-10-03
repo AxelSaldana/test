@@ -1,11 +1,15 @@
 /**
- * Asistente Virtual AR - WebXR Puro (Sin Fallback)
+ * Asistente Virtual AR - Con Sistema de Compatibilidad Mejorado
  * Modelo: models/avatar_prueba.glb
  */
 // Importar Three.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// Importar nuevos managers
+import { CompatibilityManager } from './compatibility-manager.js';
+import { FallbackManager } from './fallback-manager.js';
 
 // ===== CONFIGURACIÓN SIMPLE =====
 const CONFIG = {
